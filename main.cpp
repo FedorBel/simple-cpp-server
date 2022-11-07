@@ -63,16 +63,20 @@ public:
 
     void printDatabase()
     {
+        std::lock_guard<std::mutex> lg(mutex_);
+        std::cout << "==========================="
+                  << "\n";
         std::cout << "Active connections: " << database.size()
                   << "\n";
-        for (const auto &client : database)
+        std::cout << "==========================="
+                  << "\n";
+        for (const auto &el : database)
         {
-            const auto &adress = client.second.getAdress();
-            char client_ip[INET_ADDRSTRLEN];
-            inet_ntop(AF_INET, &(adress.sin_addr), client_ip, INET_ADDRSTRLEN);
-            int client_port = (int)ntohs(adress.sin_port);
-            printf("client: %s:%d\n", client_ip, client_port);
+            const auto &client = el.second;
+            printf("%s:%d\n", client.getIP().c_str(), client.getPort());
         }
+        std::cout << "==========================="
+                  << "\n";
     }
 
 private:
@@ -114,6 +118,8 @@ private:
             }
         }
         struct sockaddr_in getAdress() const { return client_address_; }
+        std::string getIP() const { return client_ip_; }
+        int getPort() const { return client_port_; }
 
     private:
         int client_socket_ = -1;
