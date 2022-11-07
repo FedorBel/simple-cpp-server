@@ -57,7 +57,7 @@ public:
             }
 
             std::lock_guard<std::mutex> lg(mutex_);
-            database.insert(std::make_pair(client_socket, ClientInfo(client_socket, client_address)));
+            database_.insert(std::make_pair(client_socket, ClientInfo(client_socket, client_address)));
         }
     }
 
@@ -66,11 +66,11 @@ public:
         std::lock_guard<std::mutex> lg(mutex_);
         std::cout << "==========================="
                   << "\n";
-        std::cout << "Active connections: " << database.size()
+        std::cout << "Active connections: " << database_.size()
                   << "\n";
         std::cout << "==========================="
                   << "\n";
-        for (const auto &el : database)
+        for (const auto &el : database_)
         {
             const auto &client = el.second;
             printf("%s:%d\n", client.getIP().c_str(), client.getPort());
@@ -132,7 +132,7 @@ private:
     };
 
     using client_socket = int;
-    std::unordered_map<client_socket, ClientInfo> database;
+    std::unordered_map<client_socket, ClientInfo> database_;
 };
 
 int main(int argc, char const *argv[])
