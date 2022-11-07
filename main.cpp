@@ -56,12 +56,7 @@ public:
                 exit(EXIT_FAILURE);
             }
 
-            // ClientInfo client_info(client_socket, client_address);
             std::lock_guard<std::mutex> lg(mutex_);
-            char client_ip[INET_ADDRSTRLEN];
-            inet_ntop(AF_INET, &(client_address.sin_addr), client_ip, INET_ADDRSTRLEN);
-            int client_port = (int)ntohs(client_address.sin_port);
-            printf("connection opened with client: %s:%d\n", client_ip, client_port);
             database.insert(std::make_pair(client_socket, ClientInfo(client_socket, client_address)));
         }
     }
@@ -88,12 +83,22 @@ private:
     class ClientInfo
     {
     public:
-        explicit ClientInfo(int client_socket, struct sockaddr_in client_address) : client_socket_(client_socket), client_address_(client_address) {}
+        explicit ClientInfo(int client_socket, struct sockaddr_in client_address) : client_socket_(client_socket), client_address_(client_address)
+        {
+            char client_ip[INET_ADDRSTRLEN];
+            inet_ntop(AF_INET, &(client_address.sin_addr), client_ip, INET_ADDRSTRLEN);
+            int client_port = (int)ntohs(client_address.sin_port);
+            client_ip_ = client_ip;
+            client_port_ = client_port;
+            printf("connection opened with client: %s:%d\n", client_ip_.c_str(), client_port_);
+        }
         ClientInfo(const ClientInfo &source) = delete;
         ClientInfo(ClientInfo &&source)
         {
             this->client_socket_ = source.client_socket_;
             this->client_address_ = source.client_address_;
+            this->client_ip_ = source.client_ip_;
+            this->client_port_ = source.client_port_;
             this->seq1_ = source.seq1_;
             this->seq2_ = source.seq2_;
             this->seq3_ = source.seq3_;
@@ -105,10 +110,7 @@ private:
             if (client_socket_ > 0)
             {
                 close(client_socket_);
-                char client_ip[INET_ADDRSTRLEN];
-                inet_ntop(AF_INET, &(client_address_.sin_addr), client_ip, INET_ADDRSTRLEN);
-                int client_port = (int)ntohs(client_address_.sin_port);
-                printf("connection closed with client: %s:%d\n", client_ip, client_port);
+                printf("connection closed with client: %s:%d\n", client_ip_.c_str(), client_port_);
             }
         }
         struct sockaddr_in getAdress() const { return client_address_; }
@@ -116,6 +118,8 @@ private:
     private:
         int client_socket_ = -1;
         struct sockaddr_in client_address_;
+        std::string client_ip_;
+        int client_port_;
         std::string seq1_;
         std::string seq2_;
         std::string seq3_;
